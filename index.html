@@ -1,0 +1,87 @@
+<!DOCTYPE HTML>
+<html>
+
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1.0, user-scalable=no">
+    <title>Master Save</title>
+    <script src="node_modules/jquery/dist/jquery.min.js"></script>
+    <script src="node_modules/underscore/underscore.js"></script>
+    <style type="text/css">
+    body {
+        margin: 0px;
+    }
+    </style>
+</head>
+
+<body>
+    <script type="text/javascript">
+    $(function() {
+        $.get('data.json', function(datasource) {
+            var groups = _.groupBy(datasource.data, function(d) {
+                return d.category;
+            })
+
+            var pieData = []
+            _.each(groups, function(g, key) {
+                var total = _.reduce(g, function(memo, d) {
+                    return memo + d.amount;
+                }, 0);
+                pieData.push({
+                    name: key,
+                    y: total
+                })
+            })
+
+            var totalSpent = _.reduce(datasource.data, function(memo, d) {
+                return memo + d.amount;
+            }, 0);
+
+            pie($('#container'), pieData, totalSpent.toFixed(2))
+
+            var budget = {}
+            var budgetData = _.map(_.sortBy(datasource.budget, function(d) {
+                return d.category
+            }), function(d) {
+                budget[d.category] = d.limit
+                return {
+                    y: d.limit,
+                    name: d.category
+                }
+            })
+
+            var spentData = _.map(_.sortBy(pieData, function(d) {
+                return d.name
+            }), function(d) {
+                return {
+                    y: d.y,
+                    name: d.name,
+                    percentage: (d.y.toFixed(2) / budget[d.name]) * 100
+                }
+            })
+
+            var categoryData = _.keys(groups)
+
+            loadBar($('#bar'), categoryData, budgetData, spentData)
+
+        });
+
+    });
+    </script>
+    <script src="./node_modules/highcharts/highcharts.js"></script>
+    <script src="./bar.js"></script>
+    <script src="./pie.js"></script>
+    <div>
+        <div style="text-align: center; margin: 20px;">
+            
+            01 Mar 2016 - 31 Mar 2016
+            
+        </div>
+        <div id="container"></div>
+        <div style="margin:20px"></div>
+        <div id="bar"></div>
+        <div id="pie2"></div>
+    </div>
+</body>
+
+</html>
